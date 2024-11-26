@@ -1,0 +1,97 @@
+I have Capstone project that is related to the attached PDF file.My professor(supervisor) has assigned me this project.Now i have the basic knowledge in ML. My proffessor has told me that i have to implement AI model for the other bacteria(i.e vinegar eels) same as methods and approach in the attached pdf file.He also provided me the experimental camera capture images(about 91) and iam also attaching one of it for the reference so that you could better understang about the input data sample.Please explain and guide me through this from scratch.          
+ Image Preprocessing and Machine Learning Model for the e-coli bacteria used in the attached PDF: The raw images (1000 × 2000) were first resized (100 × 200)[But my sample images have (1527 x 821)] using the nearest-neighbor method to reduce the computational cost.Fourier transform (FT) was performed along the time axis of the measured data cube. Only the spectral intensity was
+utilized in our analysis since a spectral intensity distribution with significant high-frequency content generally corresponds to more active motion, while the spectral phase is not directly linked to motion activeness and presents a challenge in quantitative interpretation. This procedure transformed an original 100 × 200 × 500 data cube (two dimensional space and one-dimensional time) into a new 100 × 200 × 249 data cube consisting of 249 positive frequency sampling points at each pixel position. The DC term was first normalized to 1 for each individual pixel spectrum and was subsequently removed. The negative frequencies provided identical information as their positive counterparts. Each measurement captured 20,000 spectra, and each of
+the spectra contained 249 frequency features. This large data set was necessary for machine learning-based analytics. The experimental replicates were pooled, processed together, and
+then divided randomly into training, validation, and test groups. An ANN with a hidden layer containing 300 neurons was constructed for classification prediction. The input layer contained 249 neurons, representing the frequency components, up to 25 Hz. The output was separated into 2 classes, “inhibited” and “non-inhibited”, referring to either bacterial susceptibility or antibiotic resistance. The stochastic gradient descent method was used to minimize the binary cross entropy loss function. Binary classification for the “inhibited” and
+“non-inhibited” bacteria groups was determined with the input from the frequency domain for each pixel. Please help me in implementing the project from scratch[through code].I have been provided with the image folder(which contains Experimental speckle images from camera captures) as the input data that I have to fed into the ANN model after applying Fourier transfrom to them and the output should be in the form of the Binary classification for the “inhibited”[1] and “non-inhibited”[0] bacteria groups was determined with the input from the frequency domain for each pixel after appying FT.But the dimesions of the image is not same form the attached pdf(i.e 1000 x 2000) ,mine was 1527 x 821 Also guide me with the steps.
+
+Also there was a intial bateria labelling for each image sample for Learning the model through ANN[Training] based on this criteria: The overnight OD[optical density] values were utilized to label the dataset. If the OD after overnight incubation was at the same level as the initial OD, the bacterial group was labeled as “inhibited”. On the other hand, if the final OD was higher than the initial OD value (above the resolution limit of the equipment which is ∼0.05), the group was labeled as “non-inhibited”.
+I have only provided with the experimental images [without OD values] only and it doesnt has any labelling intially so how do the  ANN  will learn  to  associate  patterns  in  the  frequency  domain with these labels ? For further Iam also providing, how the Optical Density (OD) values are used to label the dataset and how this relates to the output of the Artificial Neural Network (ANN) model.
+Understanding the OD-Based Labeling
+Optical Density (OD) is a measure of how much a substance, in this case, bacterial culture, attenuates (reduces the intensity of) light passing through it. In this project(vinegar eels bacteria) project:
+Inhibited Bacterial Growth: If the OD after overnight incubation remains at the same level as the initial OD, it means the bacteria did not grow, so the bacterial group is labeled as "inhibited."[1]
+Non-Inhibited (Resistant) Bacterial Growth: If the final OD is higher than the initial OD (above the resolution limit of the equipment, which is around 0.05), it means the bacteria grew, indicating antibiotic resistance. This group is labeled as "non-inhibited."[0]
+How to Incorporate OD Labels into Your ANN Model
+Label Assignment:
+Before training your ANN, you need to assign labels to your dataset based on OD measurements. These labels will be 0 for "inhibited" and 1 for "non-inhibited."
+Training the ANN:
+The ANN will be trained to learn the patterns in the Fourier Transformed images that correlate with the labels (i.e., inhibited or non-inhibited) provided by the OD values.
+Predicting with the ANN:
+After training, when you feed a new image (after Fourier Transform) into the ANN, the model will output a probability. This probability will be compared to a threshold (usually 0.5) to classify the image as either 0 (inhibited) or 1 (non-inhibited).
+Despite this I have Tried to attempt OD labelling for the data thorugh Use Unsupervised Learning (Clustering) as a Preprocessing Step:
+Clustering algorithms like K-Means  helped me in identify natural groupings in your data after applying FT to images. Once clusters are formed, you might hypothesize which cluster corresponds to "inhibited" and which to "non-inhibited" based on the characteristics of the images.After clustering, iam able to  label each cluster and then proceed with supervised learning using the ANN model.I have completed my code upto this and iam providing below so that you could complete it by helping me: 
+%pip install opencv-python
+import cv2 
+import numpy as np 
+import pandas as pd
+import os 
+from sklearn.cluster import KMeans 
+import matplotlib.pyplot as plt 
+
+# Function to apply Fourier Transform to an image 
+def apply_fourier_transform(image):     
+    f = np.fft.fft2(image)     
+    fshift = np.fft.fftshift(f)     
+    magnitude_spectrum = 20 * np.log(np.abs(fshift))     
+    return magnitude_spectrum     
+
+# Load and preprocess images 
+folder_path = r"C:\Users\91897\Desktop\Vinegar_eels\Center"
+image_files = [f for f in os.listdir(folder_path) if f.endswith('.png')]  # or other image format  
+
+# Set a fixed size for all images
+fixed_size = (100, 200)  # Width x Height
+# Extract Fourier features 
+fourier_features = [] 
+image_labels = []  # To store labels and image indices
+for index, file in enumerate(image_files):     
+    image_path = os.path.join(folder_path, file)     
+    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)  # Convert to grayscale     
+    image_resized = cv2.resize(image, fixed_size, interpolation=cv2.INTER_NEAREST)  # Resize image using nearest-neighbor method     
+    transformed_image = apply_fourier_transform(image_resized)     
+    fourier_features.append(transformed_image.flatten())  
+    image_labels.append((index, file))  # Store image index and filename# Convert to numpy array 
+fourier_features = np.array(fourier_features)  
+
+# Apply K-Means Clustering 
+n_clusters = 2  # Assuming we want to classify into 2 categories: inhibited and non-inhibited 
+kmeans = KMeans(n_clusters=n_clusters, random_state=42) 
+labels = kmeans.fit_predict(fourier_features)  
+
+# Display results 
+print("Labels assigned to images: ", labels)
+# Create a DataFrame to display the results with indices
+results = pd.DataFrame({
+    # 'Index': range(len(image_files)),
+    # 'Image Filename': image_files,
+    'Cluster Label': labels
+})
+
+# Print the results
+print(results)  
+
+# # Create a dictionary to map image indices to cluster labels
+# index_to_label = {i: labels[i] for i in range(len(labels))}
+
+# # Visualize each image with its assigned cluster label
+# for index, (img_index, file_name) in enumerate(image_labels):
+#     plt.figure(figsize=(6, 4))
+#     img_path = os.path.join(folder_path, file_name)
+#     image = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+#     image_resized = cv2.resize(image, fixed_size, interpolation=cv2.INTER_NEAREST)
+#     plt.imshow(image_resized, cmap='gray')
+#     plt.title(f'Image {img_index}: Cluster {labels[img_index]}')
+#     plt.axis('off')
+#     plt.show()
+
+# Visualize the cluster centroids 
+plt.figure(figsize=(12, 6))
+for i in range(n_clusters):
+    plt.subplot(1, n_clusters, i + 1)
+    plt.imshow(kmeans.cluster_centers_[i].reshape(fixed_size)) 
+    plt.title(f'Cluster {i + 1} Center') 
+    plt.axis('off')
+plt.show()
+
+
+

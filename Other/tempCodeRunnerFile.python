@@ -1,0 +1,39 @@
+
+import cv2
+
+# Initialize the webcam (0 is the default camera)
+cap = cv2.VideoCapture(0)
+fourcc = cv2.VideoWriter_fourcc(*'XVID')
+out = cv2.VideoWriter('captured.avi',fourcc,20.0,(640,480))
+
+print(cap.isOpened())
+
+# Check if the webcam is opened
+while(cap.isOpened()):
+    # Capture frame-by-frame
+    ret, frame = cap.read()
+
+    if ret == True:
+        # Display the resulting frame
+
+        print(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        print(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+        out.write(frame)
+        
+        gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+        #Display the Gray frame
+        cv2.imshow('frame',gray)
+    # Display the resulting frame
+    #cv2.imshow('Webcam Feed', frame)
+    
+    # Press 'q' on the keyboard to exit the loop
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+           break
+    else:
+        print("Failed to grab frame")
+        break
+
+# When everything is done, release the capture
+cap.release()
+cv2.destroyAllWindows()
